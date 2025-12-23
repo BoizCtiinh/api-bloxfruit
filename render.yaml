@@ -8,6 +8,5 @@ services:
     envVars:
       - key: DISCORD_TOKEN
         sync: false
-      - key: RENDER_EXTERNAL_URL
-        sync: false
+    healthCheckPath: /health
     autoDeploy: true
