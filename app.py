@@ -212,9 +212,22 @@ def health_check():
         'channels': status
     })
 
+# Self-ping để tránh sleep
+def self_ping():
+    """Tự ping mỗi 10 phút để tránh Render sleep"""
+    import requests
+    while True:
+        time.sleep(600)  # 10 phút
+        try:
+            url = os.getenv('RENDER_EXTERNAL_URL', 'http://localhost:5000')
+            requests.get(f"{url}/health", timeout=5)
+            print("🔄 Self-ping thành công")
+        except:
+            print("⚠️ Self-ping thất bại")
+
 if __name__ == '__main__':
-    DISCORD_TOKEN = os.getenv('MTA4NzM4MDM5NTk3ODQwNzkzNg.GCOMfU.SnCZUhS5krYYnNpwua0gn3DNClT4NGn_lJNqro')
-    PORT = int(os.getenv('PORT', 5000))
+    DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
+    PORT = int(os.getenv('PORT', 10000))
     
     if not DISCORD_TOKEN:
         print("⚠️ Cần set DISCORD_TOKEN trong environment variables")
@@ -230,9 +243,16 @@ if __name__ == '__main__':
     )
     discord_thread.start()
     
-    # Đợi bot connect
-    time.sleep(3)
+    # Khởi chạy self-ping
+    ping_thread = threading.Thread(
+        target=self_ping,
+        daemon=True
+    )
+    ping_thread.start()
     
-    # Chạy Flask API
+    # Đợi bot connect
+    time.sleep(5)
+    
+    # Chạy Flask API với threaded=True để handle concurrent requests
     print(f"🌐 API đang chạy tại port {PORT}")
-    app.run(host='0.0.0.0', port=PORT)
+    app.run(host='0.0.0.0', port=PORT, threaded=True, debug=False)
